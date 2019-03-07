@@ -14,20 +14,11 @@ namespace WcfIBMService
         protected static readonly Log4netIBM log = new Log4netIBM();
 
         #region Métodos de Rates
-        public async Task<string> GetRates(bool prueba = false)
+        public async Task<string> GetRates()
         {
             try
             {
-                if (prueba == true)
-                {
-                    StreamReader file = new StreamReader(Constants.ratesPathPruebas);
-                    string line = file.ReadLine();
-                    file.Close();
-
-                    return line;
-                }
-
-                (new FileInfo(Constants.ratesPath)).Directory.Create();
+                new FileInfo(Constants.ratesPath).Directory.Create();
                 HttpClient Cliente = new HttpClient();
                 var response = await Cliente.GetAsync(new Uri(Constants.urlRates));
 
@@ -92,10 +83,10 @@ namespace WcfIBMService
 
         }
 
-        public async Task<List<Rate>> GetRatesList(bool fichero = false)
+        public async Task<List<Rate>> GetRatesList()
         {
             List<Rate> rates = new List<Rate>();
-            rates = JsonConvert.DeserializeObject<List<Rate>>(await GetRates(fichero));
+            rates = JsonConvert.DeserializeObject<List<Rate>>(await GetRates());
             if (rates.Count > 0)
                 return rates;
             else
@@ -114,20 +105,11 @@ namespace WcfIBMService
         #endregion
 
         #region Métodos de Transactions
-        public async Task<string> GetTransactions(bool fichero = false)
+        public async Task<string> GetTransactions()
         {
             try
             {
-                if (fichero)
-                {
-                    StreamReader file = new StreamReader(Constants.transPathPruebas);
-                    string line = file.ReadLine();
-                    file.Close();
-
-                    return line;
-                }
-
-                (new FileInfo(Constants.transPath)).Directory.Create();
+                new FileInfo(Constants.transPath).Directory.Create();
                 HttpClient Cliente = new HttpClient();
                 var response = await Cliente.GetAsync(new Uri(Constants.urlTrans));
 
@@ -185,17 +167,20 @@ namespace WcfIBMService
 
         }
 
-        public async Task<SkuDetails> GetTransactionsOf(string sku, bool file = false)
+        public async Task<SkuDetails> GetTransactionsOf(string sku)
         {
-            SkuDetails detalles = new SkuDetails();
-            return detalles = await CalculateTransactions(MoneyConverter.GetMissingRates(await GetRatesList(file)), sku, file);
+            SkuDetails detalles = await CalculateTransactions(MoneyConverter.GetMissingRates(await GetRatesList()), sku);
+            if (detalles != null)
+                return detalles;
+            else
+                return null;
         }
 
-        private async Task<SkuDetails> CalculateTransactions(List<Rate> ratios, string sku, bool file = false)
+        private async Task<SkuDetails> CalculateTransactions(List<Rate> ratios, string sku)
         {
             try
             {
-                List<Transaction> trans = JsonConvert.DeserializeObject<List<Transaction>>(await GetTransactions(file));
+                List<Transaction> trans = JsonConvert.DeserializeObject<List<Transaction>>(await GetTransactions());
                 SkuDetails detalles = new SkuDetails();
                 if (trans.Count > 0)
                 {
@@ -228,17 +213,92 @@ namespace WcfIBMService
                                         auxTrans.currency = Constants.currentCurrency;
 
                                         auxTrans.amount = Math.Round(auxRate * auxAmount, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
-                                        //auxTrans.amount = MoneyConverter.RoundHalfEven((auxRate * auxAmount).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada), Constants.banker);
-
+                                        
                                         suma += auxRate * auxAmount;
                                         detalles.transactions.Add(auxTrans);
                                     }
                                 }
                             }
                         }
-                        //detalles.total = MoneyConverter.RoundHalfEven(suma.ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada), Constants.banker);
                         detalles.total = Math.Round(suma, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
                         return detalles;
+                    }
+                    else
+                    {
+                        log.AlertMsg("No se ha encontrado el sku " + sku + ", se busca en el fichero de pruebas...");
+                        try
+                        {
+                            // Se obtienen los rates del fichero de pruebas
+                            StreamReader fileRates = new StreamReader(Constants.ratesPathPruebas);
+                            string lineRates = fileRates.ReadLine();
+                            fileRates.Close();
+                            var ratesJson = JsonConvert.DeserializeObject<List<Rate>>(lineRates);
+                            ratesJson = MoneyConverter.GetMissingRates(ratesJson);
+
+                            // Se busca el sku en el fichero de pruebas
+                            StreamReader fileTrans = new StreamReader(Constants.transPathPruebas);
+                            string lineTrans = fileTrans.ReadLine();
+                            fileTrans.Close();
+                            var transJson = JsonConvert.DeserializeObject<List<Transaction>>(lineTrans);
+
+                            if (transJson.Count > 0)
+                            {
+                                var querySkuTest = from item in transJson
+                                                   where item.sku == sku
+                                                   select item;
+
+                                foreach (var item in querySkuTest)
+                                {
+                                    if (item.currency == Constants.currentCurrency)
+                                    {
+                                        detalles.transactions.Add(item);
+                                        decimal.TryParse(item.currency, out decimal sumaAux);
+                                        suma += sumaAux;
+                                    }
+                                    else
+                                    {
+                                        foreach (var r in ratesJson)
+                                        {
+                                            if (r.from == item.currency && r.to == Constants.currentCurrency)
+                                            {
+                                                Transaction auxTrans = new Transaction();
+                                                string auxR = r.rate.Replace(Constants.sepDecimalEntrada, Constants.sepDecimalTrabajo);
+                                                string auxA = item.amount.Replace(Constants.sepDecimalEntrada, Constants.sepDecimalTrabajo);
+                                                decimal.TryParse(auxR, out decimal auxRate);
+                                                decimal.TryParse(auxA, out decimal auxAmount);
+                                                auxTrans.sku = item.sku;
+                                                auxTrans.currency = Constants.currentCurrency;
+
+                                                auxTrans.amount = Math.Round(auxRate * auxAmount, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
+
+                                                suma += auxRate * auxAmount;
+                                                detalles.transactions.Add(auxTrans);
+                                            }
+                                        }
+                                        detalles.total = Math.Round(suma, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
+                                        return detalles;
+                                    }
+                                }
+                            }
+                        }
+                        catch (ArgumentNullException ex)
+                        {
+                            log.ErrorMsg("EXCEPTION ERROR");
+                            log.ErrorMsg(ex.ToString());
+                            return null;
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            log.ErrorMsg("EXCEPTION ERROR");
+                            log.ErrorMsg(ex.ToString());
+                            return null;
+                        }
+                        catch (IOException ex)
+                        {
+                            log.ErrorMsg("EXCEPTION ERROR");
+                            log.ErrorMsg(ex.ToString());
+                            return null;
+                        }
                     }
                 }
             }
@@ -250,6 +310,8 @@ namespace WcfIBMService
             }
             return null;
         }
+
+
         #endregion
     }
 }
