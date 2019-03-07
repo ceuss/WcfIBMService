@@ -13,44 +13,19 @@ namespace WcfIBMService
     [ServiceContract]
     public interface IServiceIBM
     {
-
-        [OperationContract]
-        string GetData(int value);
+        //[OperationContract]
+        //string GetData(int value);
 
         //[OperationContract]
         //CompositeType GetDataUsingDataContract(CompositeType composite);
 
-        // TODO: agregue aquí sus operaciones de servicio
         [OperationContract]
-        Task<string> GetRates(bool fichero = false);
+        Task<string> GetRates();
 
         [OperationContract]
-        Task<string> GetTransactions(bool fichero = false);
+        Task<string> GetTransactions();
 
         [OperationContract]
-        Task<string> GetTransactionsOf(string sku, bool fichero = false);
+        Task<string> GetTransactionsOf(string sku);
     }
-
-
-    // Utilice un contrato de datos, como se ilustra en el ejemplo siguiente, para agregar tipos compuestos a las operaciones de servicio.
-    //[DataContract]
-    //public class CompositeType
-    //{
-    //    bool boolValue = true;
-    //    string stringValue = "Hello ";
-
-    //    [DataMember]
-    //    public bool BoolValue
-    //    {
-    //        get { return boolValue; }
-    //        set { boolValue = value; }
-    //    }
-
-    //    [DataMember]
-    //    public string StringValue
-    //    {
-    //        get { return stringValue; }
-    //        set { stringValue = value; }
-    //    }
-    //}
 }

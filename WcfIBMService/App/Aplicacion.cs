@@ -8,19 +8,39 @@ namespace WcfIBMService
 {
     public class Aplicacion : IAplicacion
     {
-        public Task<string> GetRates()
+        IRepository app;
+
+        public Aplicacion(RepoHttpClient app)
         {
-            throw new NotImplementedException();
+            this.app = app;
         }
 
-        public Task<string> GetTransactions()
+        #region Rates
+        public async Task<string> GetRates()
         {
-            throw new NotImplementedException();
+            var contenido = await app.GetRates();
+            return contenido;
         }
 
-        public Task<SkuDetails> GetTransactionsListOf(string sku)
+        public async Task<List<Rate>> GetRatesList()
         {
-            throw new NotImplementedException();
+            List<Rate> rates = await app.GetRatesList();
+            return rates;
         }
+        #endregion
+
+        #region Transactions
+        public async Task<string> GetTransactions()
+        {
+            var contenido = await app.GetTransactions();
+            return contenido;
+        }
+
+        public async Task<SkuDetails> GetTransactionsOf(string sku)
+        {
+            SkuDetails contenido = await app.GetTransactionsOf(sku);
+            return contenido;
+        }
+        #endregion
     }
 }

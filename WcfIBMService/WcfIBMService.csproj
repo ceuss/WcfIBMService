@@ -82,10 +82,33 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Connected Services\ServiceReferenceIBM\ServiceIBM.disco" />
+    <None Include="Connected Services\ServiceReferenceIBM\configuration91.svcinfo" />
+    <None Include="Connected Services\ServiceReferenceIBM\configuration.svcinfo" />
+    <None Include="Connected Services\ServiceReferenceIBM\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
     <Content Include="ServiceIBM.svc" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App\Aplicacion.cs" />
+    <Compile Include="App\IAplicacion.cs" />
+    <Compile Include="Connected Services\ServiceReferenceIBM\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Compile>
+    <Compile Include="Logger\ILogIBM.cs" />
+    <Compile Include="Logger\Log4netIBM.cs" />
+    <Compile Include="Operations\MoneyConverter.cs" />
+    <Compile Include="Statics\Constants.cs" />
+    <Compile Include="Models\Rate.cs" />
+    <Compile Include="Models\SkuDetails.cs" />
+    <Compile Include="Models\Transaction.cs" />
+    <Compile Include="Repository\IRepository.cs" />
+    <Compile Include="Repository\RepoHttpClient.cs" />
     <Compile Include="ServiceIBM.svc.cs">
       <DependentUpon>ServiceIBM.svc</DependentUpon>
     </Compile>
@@ -96,7 +119,16 @@
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="log4net.config" />
+    <Content Include="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="Connected Services\ServiceReferenceIBM\ServiceIBM.wsdl" />
+    <None Include="Connected Services\ServiceReferenceIBM\ServiceIBM.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Connected Services\ServiceReferenceIBM\ServiceIBM1.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -104,6 +136,12 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadataStorage Include="Connected Services\ServiceReferenceIBM\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

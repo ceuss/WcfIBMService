@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace WcfIBMService
 {
-    interface IAplicacion
+    public interface IAplicacion
     {
         Task<string> GetRates();
         Task<string> GetTransactions();
-        Task<SkuDetails> GetTransactionsListOf(string sku);
+        Task<SkuDetails> GetTransactionsOf(string sku);
     }
 }
