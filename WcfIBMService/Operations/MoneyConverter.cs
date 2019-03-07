@@ -17,11 +17,12 @@ namespace WcfIBMService
             Aplicacion api = new Aplicacion(new RepoHttpClient());
 
             var apiRates = await api.GetRatesList();
-            var conversor = CurrencyConvert(apiRates, fromCurrency, toCurrency, amount).Replace(Constants.sepDecimalEntrada, Constants.sepDecimalTrabajo);
-
+            var allRates = GetMissingRates(apiRates);
+            var conversor = CurrencyConvert(allRates, fromCurrency, toCurrency, amount).Replace(Constants.sepDecimalEntrada, Constants.sepDecimalTrabajo);
+            
             double.TryParse(conversor, out double amountToRound);
-
-            return Math.Round(amountToRound, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
+            var redondeo = Math.Round(amountToRound, Constants.toRound, MidpointRounding.ToEven).ToString().Replace(Constants.sepDecimalTrabajo, Constants.sepDecimalEntrada);
+            return redondeo;
         }
 
         private static string CurrencyConvert(List<Rate> rates, string fromCurrency, string toCurrency, string amount)
